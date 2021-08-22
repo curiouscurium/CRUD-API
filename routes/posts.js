@@ -1,7 +1,35 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
-const  Post = require('../models/Post');
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: function(req,file,cb){
+        cb(null,'./uploads/');
+    },
+    filename :function(req,file,cb){
+        cb(null,new Date().toISOString()+file.originalname)
+    }
+});
 
+const fileFilter = (req,file,cb) => {
+    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+        cb(null, true);
+    }else{
+         cb(null,false);
+    }
+
+}
+
+const upload = multer({
+    storage :storage,
+    limits:{
+        fileSize : 1024 * 1024
+    },
+    fileFilter : fileFilter
+});
+
+const  Post = require('../models/Post');
+const CounterSchema = require('../models/Order');
 
 // GETS ALL POST
 router.get('/', async(req,res) =>{
@@ -16,21 +44,52 @@ router.get('/', async(req,res) =>{
 
 // SUBMIT A POST
 
-router.post('/', async(req,res) => {
+router.post('/',upload.single('productImage'), async(req,res) => {
+    // console.log(req.file.path);
     // console.log(req.body);
-    const post = new Post({
-        item : req.body.item,
-        price : req.body.price
+    const latestCounter = await CounterSchema.findOne({type: 'ORDER'});
+    const counters = (latestCounter?.counter || 0) + 1;
+    
+    const count ={
+        counter : counters,
+        type: "ORDER",
+    };
+    // const count1 = new CounterSchema(count);
+    // count1.save();
+    await CounterSchema.findOneAndUpdate(
+        { type: "ORDER" },
+        { counter: counters },
+        { returnOriginal: false }
+  );
+        console.log("abcd",req.file.path);
+
+
+    // const post = new Post({
+    //     orderNo : counters,
+    //     // orderNo : req.body.orderNo,
+    //     item : req.body.item,
+    //     price : req.body.price,
+    //     productImage:req.file.path
+    // });
+    // console.log(post);
+    const post = await Post.create({
+            orderNo : counters,
+            // orderNo : req.body.orderNo,
+            item : req.body.item,
+            price : req.body.price,
+            productImage:req.file.path
     });
-    try{
-    const savedPost = await post.save();
-       
-            res.json(savedPost);
-            console.log(data);
-        }catch(err){
-            res.json({message:error});
-            console.log(err);
-        }
+
+
+    // try{
+        // const savedPost = await post.save();   
+        // console.log(savedPost);
+        res.json(post);
+        // console.log(data);
+    // }catch(err){
+    //     res.json({message:error});
+    //     // console.log(err);
+    // }
 
 });
 
@@ -42,7 +101,7 @@ router.get('/:postId',async(req,res) =>{
    res.json(post);
     }catch(err){
         res.json({message:error});
-        console.log(err);
+        // console.log(err);
     }
 });
 
@@ -54,21 +113,21 @@ router.delete('/:postId',async(req,res) =>{
      res.json(removedPost);
     }catch(err){
         res.json({message:error});
-        console.log(err);
+        // console.log(err);
     }
 });
 
 // UPDATED POST
-router.patch('/:postId',async(req,res) =>{
-    try{
-        const updatedPost = await Post.updateOne({_id:req.params.postId},{$set: {title:req.body.title}})
-        res.json(updatedPost);
-    }catch(err){
-        res.json({message:error});
-        console.log(err);
-    }
+// router.patch('/:postId',async(req,res) =>{
+//     try{
+//         const updatedPost = await Post.updateOne({_id:req.params.postId},{$set: {price:req.body.price}})
+//         res.json(updatedPost);
+//     }catch(err){
+//         res.json({message:error});
+//         console.log(err);
+//     }
 
-});
+// });
 
 
 module.exports = router;

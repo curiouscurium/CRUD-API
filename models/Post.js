@@ -1,17 +1,25 @@
 const mongoose = require('mongoose');
-
 const PostSchema = mongoose.Schema({
-    item : {
-        type :String,
-        required : true
+    
+    orderNo :{
+        type:Number,
+        // required: true
     },
     price: {
         type : Number,
         required : true
     },
+    item : {
+        type :String,
+        required : true
+    },
     date : {
         type :Date,
         default : Date.now
+    },
+    productImage : {
+        type : String,
+        required:true
     }
 
 });

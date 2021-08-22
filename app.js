@@ -6,6 +6,8 @@ require('dotenv/config');
 
 const postsRoute = require('./routes/posts');
 
+app.use('/uploads',express.static('uploads'));
+
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
 
@@ -19,7 +21,7 @@ app.get('/', (req,res) =>{
 
 mongoose.connect(
     process.env.DB_CONNECTION,
-    {useNewUrlParser: true ,useUnifiedTopology: true},
+    {useNewUrlParser: true ,useUnifiedTopology: true,useFindAndModify: false},
     ()=> console.group('Connected to DB')
 );
 
